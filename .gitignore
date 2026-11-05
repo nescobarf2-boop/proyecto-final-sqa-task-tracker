@@ -1,0 +1,14 @@
+node_modules
+**/node_modules/
+dist
+**/dist/
+.env
+**/.env
+.env.test
+**/.env.test
+.env.local
+coverage
+**/coverage/
+.scannerwork/
+.sonar/
+.DS_Store

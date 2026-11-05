@@ -1,0 +1,9 @@
+CREATE DATABASE IF NOT EXISTS crud_sqa_test;
+GRANT ALL PRIVILEGES ON crud_sqa_test.* TO 'sqa_user'@'%';
+USE crud_app;
+CREATE TABLE IF NOT EXISTS todos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

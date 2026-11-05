@@ -1,0 +1,35 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Definir MYSQL_ROOT_PASSWORD en .env}
+      MYSQL_DATABASE: crud_app
+      MYSQL_USER: sqa_user
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD:?Definir MYSQL_APP_PASSWORD en .env}
+    ports:
+      - '127.0.0.1:3308:3306'
+    volumes:
+      - sqa_mysql_datos:/var/lib/mysql
+      - ./docker/init/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 --silent']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    ports:
+      - '127.0.0.1:8081:80'
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  sqa_mysql_datos:

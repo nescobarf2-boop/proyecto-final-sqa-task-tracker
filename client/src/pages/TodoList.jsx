@@ -19,7 +19,7 @@ export default function TodoList() {
   }
 
   useEffect(() => {
-    fetchTodos();
+    void fetchTodos();
   }, []);
 
   async function remove(id) {

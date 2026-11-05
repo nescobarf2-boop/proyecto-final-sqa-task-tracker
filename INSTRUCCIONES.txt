@@ -1,0 +1,40 @@
+KIT DE ARCHIVOS SQA — LEER ANTES DE COPIAR
+
+Este kit NO contiene la aplicación completa; se aplica SOBRE el proyecto original
+https://github.com/vgnaidukollu-lgtm/task-tracker-crud
+
+1. Descargar y descomprimir el repositorio original.
+2. Guardar una copia original para medir la línea base ANTES de modificarla.
+3. Copiar los archivos de este kit a la raíz de la aplicación conservando las carpetas.
+4. Sí: reemplazar los originales server/index.js, server/routes/todos.js y client/vite.config.js.
+5. En la raíz, ejecutar:
+   npm init -y
+   npm install -D eslint@9 @eslint/js globals prettier
+   npm pkg set "scripts.lint=eslint server client/src"
+   npm pkg set "scripts.format=prettier --write \"server/**/*.js\" \"client/src/**/*.{js,jsx}\""
+   npm pkg set "scripts.format:check=prettier --check \"server/**/*.js\" \"client/src/**/*.{js,jsx}\""
+6. En server:
+   npm install
+   npm install -D jest supertest
+   npm pkg set "scripts.test=jest --coverage --runInBand"
+7. En client:
+   npm install
+   npm install -D vitest jsdom @testing-library/react @testing-library/jest-dom
+   npm pkg set "scripts.test=vitest run"
+8. Crear bases locales crud_app y crud_sqa_test. Tests solo usan crud_sqa_test.
+9. Volver a raiz:
+   npm run format
+   npm run lint
+   npm run format:check
+   npm test --prefix server
+   npm test --prefix client
+   npm run build --prefix client
+10. Configurar claves sonar.projectKey y sonar.organization en sonar-project.properties.
+11. Agregar SONAR_TOKEN como GitHub Actions repository secret.
+12. Subir a repositorio propio con branch 'main'.
+13. Verificar Actions, reportar métricas reales en /docs, y proteger 'main'.
+
+IMPORTANTE: instalar Node 22.12+ (ideal Node 22 LTS) para compatibilidad con Vite 7.
+IMPORTANTE: el repo original carece de licencia visible: citar fuente y verificar
+condiciones de reutilización; que el trabajo de pipeline, pruebas y documentación
+sea del estudiante como requiere el curso.

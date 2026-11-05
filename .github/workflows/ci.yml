@@ -1,0 +1,122 @@
+
+name: Calidad SQA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - run: npm ci
+      - run: npm ci --prefix server
+      - run: npm ci --prefix client
+
+      - run: npm run build --prefix client
+      - run: npm run lint
+      - run: npm run format:check
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+          MYSQL_DATABASE: crud_sqa_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=15
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: '3306'
+      DB_USER: root
+      DB_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+      DB_NAME: crud_sqa_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - run: npm ci --prefix server
+      - run: npm ci --prefix client
+
+      - name: Pruebas backend con Jest
+        run: npm test --prefix server
+
+      - name: Pruebas frontend con cobertura
+        run: npm run test:coverage --prefix client
+
+      - name: Guardar reportes de cobertura
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: cobertura-completa
+          path: |
+            server/coverage/lcov.info
+            client/coverage/lcov.info
+          if-no-files-found: error
+
+  analyze:
+    name: analyze
+    needs: [build, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Descargar reportes de cobertura
+        uses: actions/download-artifact@v4
+        with:
+          name: cobertura-completa
+          path: .
+
+      - name: SonarQube Cloud
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  report:
+    name: report
+    if: always()
+    needs: [build, test, analyze]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resumen
+        run: |
+          echo '## Verificaciones de calidad' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Build: ${{ needs.build.result }}' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Test: ${{ needs.test.result }}' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Analyze: ${{ needs.analyze.result }}' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Bloquear resultados no aprobados
+        if: ${{ needs.build.result != 'success' || needs.test.result != 'success' || needs.analyze.result != 'success' }}
+        run: exit 1

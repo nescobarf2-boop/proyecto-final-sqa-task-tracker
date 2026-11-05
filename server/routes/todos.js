@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { validarTarea } = require('../utils/validarTarea');
 
-// Get all todos
 router.get('/', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM todos ORDER BY id DESC');
@@ -13,54 +13,59 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get one
 router.get('/:id', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM todos WHERE id = ?', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
-    res.json(rows[0]);
+    return res.json(rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    return res.status(500).json({ error: 'Database error' });
   }
 });
 
-// Create
 router.post('/', async (req, res) => {
+  const validacion = validarTarea(req.body);
+  if (!validacion.ok) return res.status(400).json({ error: validacion.error });
   try {
-    const { title, description } = req.body;
-    const [result] = await pool.query('INSERT INTO todos (title, description) VALUES (?, ?)', [title, description || null]);
+    const [result] = await pool.query('INSERT INTO todos (title, description) VALUES (?, ?)', [
+      validacion.title,
+      validacion.description,
+    ]);
     const [rows] = await pool.query('SELECT * FROM todos WHERE id = ?', [result.insertId]);
-    res.status(201).json(rows[0]);
+    return res.status(201).json(rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    return res.status(500).json({ error: 'Database error' });
   }
 });
 
-// Update
 router.put('/:id', async (req, res) => {
+  const validacion = validarTarea(req.body);
+  if (!validacion.ok) return res.status(400).json({ error: validacion.error });
   try {
-    const { title, description } = req.body;
-    await pool.query('UPDATE todos SET title = ?, description = ? WHERE id = ?', [title, description || null, req.params.id]);
+    const [result] = await pool.query('UPDATE todos SET title = ?, description = ? WHERE id = ?', [
+      validacion.title,
+      validacion.description,
+      req.params.id,
+    ]);
+    if (!result.affectedRows) return res.status(404).json({ error: 'Not found' });
     const [rows] = await pool.query('SELECT * FROM todos WHERE id = ?', [req.params.id]);
-    if (!rows.length) return res.status(404).json({ error: 'Not found' });
-    res.json(rows[0]);
+    return res.json(rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    return res.status(500).json({ error: 'Database error' });
   }
 });
 
-// Delete
 router.delete('/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM todos WHERE id = ?', [req.params.id]);
-    res.json({ success: true });
+    const [result] = await pool.query('DELETE FROM todos WHERE id = ?', [req.params.id]);
+    if (!result.affectedRows) return res.status(404).json({ error: 'Not found' });
+    return res.json({ success: true });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    return res.status(500).json({ error: 'Database error' });
   }
 });
-
 module.exports = router;

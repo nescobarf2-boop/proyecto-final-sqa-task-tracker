@@ -19,6 +19,7 @@ export default function TodoList() {
   }
 
   useEffect(() => {
+    // fetchTodos gestiona los errores con su propio try/catch.
     void fetchTodos();
   }, []);
 
@@ -26,7 +27,7 @@ export default function TodoList() {
     if (!confirm('Delete this todo?')) return;
     try {
       await API.delete(`/todos/${id}`);
-      setTodos(todos.filter((t) => t.id !== id));
+      setTodos((current) => current.filter((t) => t.id !== id));
     } catch (e) {
       alert('Failed to delete');
     }
@@ -48,10 +49,17 @@ export default function TodoList() {
                 <p>{t.description}</p>
               </div>
               <div className="actions">
-                <Link to={`/edit/${t.id}`} className="btn icon">
+                <Link to={`/edit/${t.id}`} className="btn icon" aria-label={`Edit ${t.title}`}>
                   <FiEdit2 />
                 </Link>
-                <button onClick={() => remove(t.id)} className="btn icon danger">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void remove(t.id);
+                  }}
+                  className="btn icon danger"
+                  aria-label={`Delete ${t.title}`}
+                >
                   <FiTrash2 />
                 </button>
               </div>

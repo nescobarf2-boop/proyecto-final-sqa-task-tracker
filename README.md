@@ -188,3 +188,7 @@ La reutilización de la aplicación permitió concentrar el trabajo en el asegur
 - Vitest: https://vitest.dev/
 - Docker: https://docs.docker.com/
 - React: https://react.dev/
+
+## Demostración práctica del pipeline
+
+Esta modificación se realiza en una rama independiente para verificar que GitHub Actions ejecute las pruebas automatizadas y SonarQube analice los cambios antes de integrarlos a la rama principal.
